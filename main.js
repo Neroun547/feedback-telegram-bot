@@ -1,16 +1,20 @@
 const { Telegraf } = require("telegraf");
-const { botToken, idAdmin } = require("./config.json");
+const { botToken, idsAdmins } = require("./config.json");
 
 const bot = new Telegraf(botToken);
 
 bot.on("message",  (ctx, next) => {
 
-    if(ctx.update.message.reply_to_message && ctx.update.message.reply_to_message.chat.id === idAdmin && ctx.message.reply_to_message.forward_from.id) {
+    if(ctx.update.message.reply_to_message && idsAdmins.find(idAdmin => Number(ctx.update.message.reply_to_message.chat.id) === idAdmin) && ctx.message.reply_to_message.forward_from.id) {
         ctx.telegram.sendCopy(ctx.message.reply_to_message.forward_from.id, ctx.message);
     }
-    if((!ctx.update.message.text && ctx.update.message.chat.id !== idAdmin)
-        || (ctx.update.message.text && ctx.update.message.text.trim().toLowerCase() !== "/start" && ctx.update.message.text.trim().toLowerCase() !== "/help" && ctx.update.message.chat.id !== idAdmin)) {
-        ctx.forwardMessage(idAdmin, ctx.update.message.chat.id, ctx.update.message.message_id);
+    if((!ctx.update.message.text && !idsAdmins.find(idAdmin => Number(ctx.update.message.chat.id) === idAdmin))
+        || (ctx.update.message.text && ctx.update.message.text.trim().toLowerCase() !== "/start" && ctx.update.message.text.trim().toLowerCase() !== "/help" && !idsAdmins.find(idAdmin => Number(ctx.update.message.chat.id) === idAdmin))) {
+
+        idsAdmins.forEach(idAdmin => {
+            ctx.forwardMessage(idAdmin, ctx.update.message.chat.id, ctx.update.message.message_id)
+                .catch(e => console.log(e))
+        });
     }
     next();
 });
